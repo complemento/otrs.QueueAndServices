@@ -11,24 +11,47 @@ sub Load {
 		return;
 	} 
 
+	if ( $Self->Get('QueueService::QSActive') eq "1" ) {
+		# check if we will block all services for all queues standard
+		if ( $Self->Get('QueueService::BlockAll') ) {
+			$Self->{TicketAcl}->{'ACL-QS_000-All'} = {
+				Properties => {},
+				PossibleNot => {Ticket => {Service  => ['[RegExp]^']}}
+			};
+		}
 
-	# check if we will block all services for all queues standard
-	if ( $Self->Get('QueueService::BlockAll') ) {
-		$Self->{TicketAcl}->{'ACL-QS_000-All'} = {
-			Properties => {},
-			PossibleNot => {Ticket => {Service  => ['[RegExp]^']}}
-		};
+		my $qs_hash=$Self->Get('QueueService::QueueServicesName') or return;
+		my %QueueServices = %{$qs_hash};
+		my @Items;
+		for my $Queue ( keys %QueueServices ) {
+			@Items = split /;/, $QueueServices{$Queue};
+			$Self->{TicketAcl}->{'ACL-QS_0'.$Queue} = {
+				Properties => {Queue => {QueueID => [$Queue]}},
+				Possible => {Ticket => {Service  => [@Items]}}
+			};
+		}
+	} else {
+		# check if we will block all Queues for all Services standard
+		if ( $Self->Get('QueueService::BlockAll') ) {
+			$Self->{TicketAcl}->{'ACL-SQ_000-All'} = {
+				Properties => {},
+				PossibleNot => {Ticket => {Queue  => ['[RegExp]^']}}
+			};
+		}
+
+		my $sq_hash=$Self->Get('QueueService::ServiceQueuesID') or return;
+		my %ServiceQueues = %{$sq_hash};
+		my @Items;
+		for my $Service ( keys %ServiceQueues ) {
+			@Items = split /;/, $ServiceQueues{$Service};
+			$Self->{TicketAcl}->{'ACL-SQ_0'.$Service} = {
+				Properties => {Service => {ServiceID => [$Service]}},
+				Possible => {Ticket => {Queue  => [@Items]}}
+			};
+		}		
 	}
 
-	my $qs_hash=$Self->Get('QueueService::QueueServicesName') or return;
-	my %QueueServices = %{$qs_hash};
-	my @Items;
-	for my $Queue ( keys %QueueServices ) {
-		@Items = split /;/, $QueueServices{$Queue};
-		$Self->{TicketAcl}->{'ACL-QS_0'.$Queue} = {
-			Properties => {Queue => {QueueID => [$Queue]}},
-			Possible => {Ticket => {Service  => [@Items]}}
-		};
-	}
+	
+
 }
 1;

@@ -19,6 +19,11 @@ use Kernel::System::SysConfig;
 use Kernel::System::Service;
 use Kernel::System::Valid;
 
+
+use Data::Dumper;
+
+
+
 use vars qw($VERSION);
 $VERSION = qw($Revision: 1.41 $) [1];
 
@@ -32,8 +37,8 @@ sub new {
     # check all needed objects
     
 
-    $Self->{SysConfig}              = $Kernel::OM->Get('Kernel::System::SysConfig');
-    $Self->{QueueObject}            = $Kernel::OM->Get('Kernel::System::Queue');
+    $Self->{SysConfig}          = $Kernel::OM->Get('Kernel::System::SysConfig');
+    $Self->{QueueObject}        = $Kernel::OM->Get('Kernel::System::Queue');
     $Self->{ServiceObject} 	    = $Kernel::OM->Get('Kernel::System::Service');
     $Self->{ConfigObject}	    = $Kernel::OM->Get('Kernel::Config');
     $Self->{LayoutObject}	    = $Kernel::OM->Get('Kernel::Output::HTML::Layout');
@@ -102,33 +107,64 @@ sub Run {
 
         my $ID = $Self->{ParamObject}->GetParam( Param => 'ID' );
 
-	my %QueueServicesID = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesID')};
-	my %QueueServicesName = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesName')};
+		my %QueueServicesID = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesID')};
+		my %QueueServicesName = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesName')};
 
-	#Delete Example data @todo	
-	delete %QueueServicesID->{9999999999999};
-	delete %QueueServicesName->{9999999999999};
-	#Delete the actual Queue Data
-	delete %QueueServicesID->{$ID};
-	delete %QueueServicesName->{$ID};
-	
-	my @servicesName;
+		#Delete Example data @todo	
+		delete $QueueServicesID{9999999999999};
+		delete $QueueServicesName{9999999999999};
+		#Delete the actual Queue Data
+		delete $QueueServicesID{$ID};
+		delete $QueueServicesName{$ID};
+		
+		my @servicesName;
 
-	for my $service (@IDs){
-		push(@servicesName,$Self->{ServiceObject}->ServiceLookup(ServiceID=>$service)) if scalar @IDs;
-	}
-	%QueueServicesID->{$ID}=join(';',@IDs) if scalar @IDs;
-	%QueueServicesName->{$ID}=join(';',@servicesName) if scalar @IDs;
-	$Self->{SysConfig}->ConfigItemUpdate(
-		    Valid => 1,
-		    Key => 'QueueService::QueueServicesID',
-		    Value => \%QueueServicesID,
-	     );
-	$Self->{SysConfig}->ConfigItemUpdate(
-		    Valid => 1,
-		    Key => 'QueueService::QueueServicesName',
-		    Value => \%QueueServicesName,
-	     );
+		for my $service (@IDs){
+			push(@servicesName,$Self->{ServiceObject}->ServiceLookup(ServiceID=>$service)) if scalar @IDs;
+		}
+		$QueueServicesID{$ID}=join(';',@IDs) if scalar @IDs;
+		$QueueServicesName{$ID}=join(';',@servicesName) if scalar @IDs;
+		
+		my %ServiceQueuesIDHashOfArray;
+		for my $QueueID (keys %QueueServicesID){
+			my $Queue = $Self->{QueueObject}->QueueLookup(QueueID=>$QueueID);
+			my @Services = split /;/,$QueueServicesID{$QueueID};
+			SERVICE:
+			for my $ServiceID (@Services){
+				next SERVICE if !$ServiceID;
+				if(defined $ServiceQueuesIDHashOfArray{$ServiceID}){
+					if (!( grep $_ eq $Queue, @{$ServiceQueuesIDHashOfArray{$ServiceID}} )){
+						push @{$ServiceQueuesIDHashOfArray{$ServiceID}},$Queue;
+					}
+				} else {
+					$ServiceQueuesIDHashOfArray{$ServiceID}=["$Queue"];
+				}
+			}
+		}
+		
+		my %ServiceQueuesIDs;
+		
+		for my $Service (keys %ServiceQueuesIDHashOfArray){
+			$ServiceQueuesIDs{$Service} = join(';',@{$ServiceQueuesIDHashOfArray{$Service}});
+		}
+		
+		$Self->{SysConfig}->ConfigItemUpdate(
+				Valid => 1,
+				Key => 'QueueService::QueueServicesID',
+				Value => \%QueueServicesID,
+			 );
+
+		$Self->{SysConfig}->ConfigItemUpdate(
+				Valid => 1,
+				Key => 'QueueService::ServiceQueuesID',
+				Value => \%ServiceQueuesIDs,
+			 );
+			 
+		$Self->{SysConfig}->ConfigItemUpdate(
+				Valid => 1,
+				Key => 'QueueService::QueueServicesName',
+				Value => \%QueueServicesName,
+			 );
 
         return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
     }
