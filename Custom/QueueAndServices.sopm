@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <otrs_package version="1.1">
     <Name>QueueAndServices</Name>
-    <Version>5.0.3</Version>
+    <Version>6.0.0</Version>
     <Vendor>Complemento [Free]</Vendor>
     <URL>http://www.complemento.net.br</URL>
     <License>GNU GENERAL PUBLIC LICENSE Version 2, June 1991</License>
@@ -12,9 +12,9 @@
     <ChangeLog Date="2015-04-14 11:16:00" Version="4.0.1">Support for OTRS 4.0.x </ChangeLog>
     <ChangeLog Date="2015-11-23 11:16:00" Version="5.0.1">Support for OTRS 5.0.x </ChangeLog>	
     <Description Lang="en">Choose which Services you want to show on each Queue</Description>
-    <Framework>5.0.x</Framework>
+    <Framework>6.0.x</Framework>
     <Filelist>
-        <File Location="Kernel/Config/Files/QueueServices.xml" Permission="644" Encode="Base64"></File>
+        <File Location="Kernel/Config/Files/XML/QueueServices.xml" Permission="644" Encode="Base64"></File>
         <File Location="Kernel/Config/Files/ZZZZQueuesAndServices.pm" Permission="644" Encode="Base64"></File>
         <File Location="Kernel/Modules/AdminQueueServices.pm" Permission="644" Encode="Base64"></File>
         <File Location="Custom/QueueAndServices.sopm" Permission="644" Encode="Base64"></File>
