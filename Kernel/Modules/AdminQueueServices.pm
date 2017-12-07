@@ -148,25 +148,40 @@ sub Run {
 			$ServiceQueuesIDs{$Service} = join(';',@{$ServiceQueuesIDHashOfArray{$Service}});
 		}
 		
-		$Self->{SysConfig}->ConfigItemUpdate(
-				Valid => 1,
-				Key => 'QueueService::QueueServicesID',
-				Value => \%QueueServicesID,
-			 );
+		$Self->{SysConfig}->SettingsSet(
+			Settings => [                                       # (required) List of settings to update.
+				{
+					Name => 'QueueService::QueueServicesID',
+					EffectiveValue => \%QueueServicesID,
+					IsValid                => 1,                # (optional)
+				},
+			],
+			UserID => 1
+		 );
 
-		$Self->{SysConfig}->ConfigItemUpdate(
-				Valid => 1,
-				Key => 'QueueService::ServiceQueuesID',
-				Value => \%ServiceQueuesIDs,
-			 );
+		$Self->{SysConfig}->SettingsSet(
+			Settings =>[
+				{
+					Name => 'QueueService::ServiceQueuesID',
+					EffectiveValue => \%ServiceQueuesIDs,					
+					IsValid                => 1,                # (optional)
+				}
+			],
+			UserID => 1
+		 );
 			 
-		$Self->{SysConfig}->ConfigItemUpdate(
-				Valid => 1,
-				Key => 'QueueService::QueueServicesName',
-				Value => \%QueueServicesName,
-			 );
-
-        return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
+		$Self->{SysConfig}->SettingsSet(
+			Settings => [
+				{
+					Name => 'QueueService::QueueServicesName',
+					EffectiveValue => \%QueueServicesName,
+					IsValid                => 1,                # (optional)
+				}
+			],
+			UserID => 1
+		 );
+		
+		return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
     }
 
     # ------------------------------------------------------------ #
