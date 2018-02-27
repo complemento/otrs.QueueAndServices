@@ -94,8 +94,7 @@
                         <li>[% Translate("No data found.") | html %]</li>
 [% RenderBlockEnd("NoResponsesFoundMsg") %]
 [% RenderBlockStart("List1n") %]
-                        <!--li><a href="[% Env("Baselink") %]Action=[% Env("Action") %];Subaction=[% Data.Subaction | uri %];ID=[% Data.ID | uri %]" class="AsBlock">[% Data.Name | html %]</a></li-->
-                        <li>[% Data.Name | html %]</li>
+                        <li><a href="[% Env("Baselink") %]Action=[% Env("Action") %];Subaction=[% Data.Subaction | uri %];ID=[% Data.ID | uri %]" class="AsBlock">[% Data.Name | html %]</a></li>
 [% RenderBlockEnd("List1n") %]
                     </ul>
                 </div>
@@ -127,6 +126,7 @@
                     <input type="hidden" name="Action" value="[% Env("Action") %]"/>
                     <input type="hidden" name="Subaction" value="Change[% Data.Type | html %]"/>
                     <input type="hidden" name="ID" value="[% Data.ID | html %]"/>
+ 					<input type="hidden" name="Kind" value="[% Data.Kind | html %]" />
                     <table class="DataTable VariableWidth" id="UserRoles">
                         <thead>
                             <tr>

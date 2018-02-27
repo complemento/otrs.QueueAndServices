@@ -1,4 +1,4 @@
-# --
+		# --
 # Kernel/Modules/AdminQueueServices.pm - to add/update/delete queue <- -> services
 # Copyright (C) 20011-2011 Ronaldo Richieri http://www.richieri.com
 # --
@@ -60,7 +60,8 @@ sub Run {
         $Self->{ConfigObject}->Set(
 	    Key => 'QueueService::QSActive',
 	    Value => 1,
-	);$Kernel::OM->Get('Kernel::Output::HTML::Layout');
+	);
+		$Kernel::OM->Get('Kernel::Output::HTML::Layout');
         # get queue data
         my $ID = $Self->{ParamObject}->GetParam( Param => 'ID' );
         my %QueueData = $Self->{QueueObject}->QueueGet( ID => $ID );
@@ -81,15 +82,73 @@ sub Run {
 	        $SelServices{ $Item } = '1';
         }
 
-      
         my $Output = $Self->{LayoutObject}->Header();
-        $Output .= $Self->{LayoutObject}->NavigationBar();
+       $Output .= $Self->{LayoutObject}->NavigationBar();
         $Output .= $Self->_Change(
             Selected => \%SelServices,
             Data     => \%ServiceData,
             ID       => $QueueData{QueueID},
             Name     => $QueueData{Name},
             Type     => 'Queue',
+        );
+        $Output .= $Self->{LayoutObject}->Footer();
+
+
+        return $Output;
+    }
+	elsif ( $Self->{Subaction} eq 'Service' ) {
+                        
+        $Self->{ConfigObject}->Set(
+	    Key => 'QueueService::QSActive',
+	    Value => 1,
+	);
+		$Kernel::OM->Get('Kernel::Output::HTML::Layout');
+        # get queue data
+        my $ServiceObject = $Kernel::OM->Get("Kernel::System::Service");
+		my $QueueObject   = $Kernel::OM->Get("Kernel::System::Queue");
+        my $ID = $Self->{ParamObject}->GetParam( Param => 'ID' );
+		my %ServiceDataFull = $ServiceObject->ServiceGet(ServiceID => $ID, UserID => 1); 
+         my %QueueData = $Self->{QueueObject}->QueueGet( ID => $ID );
+	# Services available        
+        my %QueueData
+            = $QueueObject->QueueList( Valid => 1 );
+	# Check selected services on this queue
+	my %QueueServicesID = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesID')};
+	my %QueueServicesName = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesName')};
+       
+		 my %SelQueue;
+		my @Items;
+		my %Service_Queues;
+        for my $Queue ( keys %QueueServicesID ) {
+			#Valor do Hash
+			my @ServicesIDs = split/;/,$QueueServicesID{$Queue};
+			for my $SID  (@ServicesIDs) {
+				
+				if($Service_Queues{$SID}) {
+					push(@{$Service_Queues{$SID}}, $Queue);
+
+				} else {
+						
+					$Service_Queues{$SID} =  [$Queue]; 
+				}	
+	      	}
+        	if ($Queue eq $ID) {
+        	    @Items = split /;/, $QueueServicesID{$Queue};
+        	}
+        }        
+        for my $Item (@Items) {
+	        $SelQueue{ $Item } = '1';
+        }
+		 
+        my $Output = $Self->{LayoutObject}->Header();
+        $Output .= $Self->{LayoutObject}->NavigationBar();
+        $Output .= $Self->_Change(
+            Selected => \%Service_Queues,
+            Data     => \%QueueData,
+            ID       => $ServiceDataFull{ServiceID},
+            Name     => $ServiceDataFull{Name},
+            Type     => 'Queue',
+			Kind 	=> 'Services',
         );
         $Output .= $Self->{LayoutObject}->Footer();
 
@@ -103,14 +162,119 @@ sub Run {
     elsif ( $Self->{Subaction} eq 'ChangeQueue' ) {
 
         # get new role member
-        my @IDs = $Self->{ParamObject}->GetArray( Param => 'Queue' );
-
-        my $ID = $Self->{ParamObject}->GetParam( Param => 'ID' );
+       	my $ID = $Self->{ParamObject}->GetParam( Param => 'ID' );
 
 		my %QueueServicesID = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesID')};
 		my %QueueServicesName = %{$Self->{ConfigObject}->Get('QueueService::QueueServicesName')};
+		my @QueueIDs = $Self->{ParamObject}->GetArray( Param => 'Queue' ); 
+		my $ServiceID = $Self->{ParamObject}->GetParam( Param => 'ID' );
+		#
+   		if($Self->{ParamObject}->GetParam( Param => 'Kind') eq "Services") {
+			
+			#Delete Example data @todo	
+			delete $QueueServicesID{9999999999999};
+			delete $QueueServicesName{9999999999999};
+			#Delete the actual Queue Data
+	
+		
+			my @servicesName;
 
-		#Delete Example data @todo	
+			push(@servicesName,$Self->{ServiceObject}->ServiceLookup(ServiceID=>$ServiceID)) if $ServiceID;
+			my @RecoverServices;	
+			#foreach my $ID_Queue ( keys %QueueServicesID ) {
+
+    			my %QueueData = $Self->{QueueObject}->QueueList( Valid => 1 );
+			foreach my $QID ( keys %QueueData ) {
+				
+
+				my $ID_Queue = $QueueServicesID{$QID};
+					
+				@RecoverServices = split /;/,$QueueServicesID{$QID};
+				if(grep $_ eq $QID, @QueueIDs){
+				
+					if(grep $_ eq $ServiceID, @RecoverServices) {
+					
+				 		$Kernel::OM->Get("Kernel::System::Log")->Dumper($ServiceID);
+					} else {
+
+						
+						push (@RecoverServices, $ServiceID);
+					}
+				}else {
+					$Kernel::OM->Get("Kernel::System::Log")->Dumper("REITO");
+					@RecoverServices =  grep { $_ ne $ServiceID } @RecoverServices;
+				}
+				
+				delete $QueueServicesID{$QID};
+				delete $QueueServicesName{$QID};
+				my %ServiceQueuesIDHashOfArray;
+				$QueueServicesID{$QID}=join(';',@RecoverServices) if scalar @RecoverServices;
+				$QueueServicesName{$QID}=join(';',@servicesName) if scalar @RecoverServices;
+			
+				my %ServiceQueuesIDHashOfArray;
+				for my $QueueID (keys %QueueServicesID){
+
+					my $Queue = $Self->{QueueObject}->QueueLookup(QueueID=>$QueueID);
+					my @Services = split /;/,$QueueServicesID{$QueueID};
+					SERVICE:
+					for my $ServiceID (@Services){
+
+						next SERVICE if !$ServiceID;
+						if(defined $ServiceQueuesIDHashOfArray{$ServiceID}){
+							if (!( grep $_ eq $Queue, @{$ServiceQueuesIDHashOfArray{$ServiceID}} )){
+								push @{$ServiceQueuesIDHashOfArray{$ServiceID}},$Queue;
+							}
+						} else {
+							$ServiceQueuesIDHashOfArray{$ServiceID}=["$Queue"];
+						}
+					}
+				}
+			
+				my %ServiceQueuesIDs;
+			
+				for my $Service (keys %ServiceQueuesIDHashOfArray){
+					$ServiceQueuesIDs{$Service} = join(';',@{$ServiceQueuesIDHashOfArray{$Service}});
+				}
+			
+				$Self->{SysConfig}->SettingsSet(
+					Settings => [                                       # (required) List of settings to update.
+						{
+							Name => 'QueueService::QueueServicesID',
+							EffectiveValue => \%QueueServicesID,
+							IsValid                => 1,                # (optional)
+						},
+					],
+					UserID => 1
+			 	);
+
+				$Self->{SysConfig}->SettingsSet(
+					Settings =>[
+						{
+							Name => 'QueueService::ServiceQueuesID',
+							EffectiveValue => \%ServiceQueuesIDs,					
+							IsValid                => 1,                # (optional)
+						}
+					],
+					UserID => 1
+				 );
+				 
+				$Self->{SysConfig}->SettingsSet(
+					Settings => [
+						{
+							Name => 'QueueService::QueueServicesName',
+							EffectiveValue => \%QueueServicesName,
+							IsValid                => 1,                # (optional)
+						}
+					],
+					UserID => 1
+				 );
+			
+				}
+				return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
+		} else {
+ 
+        my @IDs = $Self->{ParamObject}->GetArray( Param => 'Queue' );
+	#Delete Example data @todo	
 		delete $QueueServicesID{9999999999999};
 		delete $QueueServicesName{9999999999999};
 		#Delete the actual Queue Data
@@ -183,7 +347,7 @@ sub Run {
 		
 		return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
     }
-
+	}
     # ------------------------------------------------------------ #
     # overview
     # ------------------------------------------------------------ #
@@ -229,7 +393,6 @@ sub _Change {
     );
 
     $Self->{LayoutObject}->Block( Name => "ChangeHeader$VisibleType{$NeType}" );
-
     $Self->{LayoutObject}->Block(
         Name => 'ChangeHeader',
         Data => {
@@ -243,7 +406,39 @@ sub _Change {
 
     for my $ID ( sort { uc( $Data{$a} ) cmp uc( $Data{$b} ) } keys %Data ) {
 
-        # set output class
+        my $Selected = '';
+		if($Param{Kind} eq 'Services') {
+	    	# set output class
+			if($Param{Selected}->{$Param{ID}}) {
+				
+				if(grep  $_ eq $ID, @{$Param{Selected}->{$Param{ID}}} ) 
+ 				{
+					$Selected = ' checked="checked"';
+				} else{
+					$Selected = '';
+				}
+			}
+       		$QueueTag = $Type ne 'Queue' ? 'Queue' : '';
+
+        	$Self->{LayoutObject}->Block(
+            	Name => 'ChangeRow',
+            	Data => {
+                	%Param,
+                	Name          => $Param{Data}->{$ID},
+                	NeType        => $NeType,
+                	Type          => $Type,
+                	ID            => $ID,
+                	Selected      => $Selected,
+                	VisibleType   => $VisibleType{$Type},
+                	VisibleNeType => $VisibleType{$NeType},
+                	Queue         => $QueueTag,
+					Kind 		  => "Services"
+            	},
+        )	;
+    	}
+		
+		else {
+     # set output class
         my $Selected = $Param{Selected}->{$ID} ? ' checked="checked"' : '';
 
         $QueueTag = $Type ne 'Queue' ? 'Queue' : '';
@@ -264,6 +459,9 @@ sub _Change {
         );
     }
 
+
+		}
+   
     return $Self->{LayoutObject}->Output(
         TemplateFile => 'AdminQueueServices',
         Data         => \%Param,
