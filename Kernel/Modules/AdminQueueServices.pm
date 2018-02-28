@@ -179,53 +179,61 @@ sub Run {
 		
 			my @servicesName;
 
-			push(@servicesName,$Self->{ServiceObject}->ServiceLookup(ServiceID=>$ServiceID)) if $ServiceID;
 			my @RecoverServices;	
-			#foreach my $ID_Queue ( keys %QueueServicesID ) {
-
-    			my %QueueData = $Self->{QueueObject}->QueueList( Valid => 1 );
+			push(@servicesName,$Self->{ServiceObject}->ServiceLookup(ServiceID=>$ServiceID)) if $ServiceID;
+			
+    		my %QueueData = $Self->{QueueObject}->QueueList( Valid => 1 );
 			foreach my $QID ( keys %QueueData ) {
 				
-
+				next if !$QID;
 				my $ID_Queue = $QueueServicesID{$QID};
 					
 				@RecoverServices = split /;/,$QueueServicesID{$QID};
+
 				if(grep $_ eq $QID, @QueueIDs){
 				
 					if(grep $_ eq $ServiceID, @RecoverServices) {
 					
-				 		$Kernel::OM->Get("Kernel::System::Log")->Dumper($ServiceID);
+				
 					} else {
 
-						
 						push (@RecoverServices, $ServiceID);
+						my $ServiceName = $Self->{ServiceObject}->ServiceLookup(ServiceID=>$ServiceID);
+						push (@servicesName, $ServiceName);
+						
 					}
 				}else {
-					$Kernel::OM->Get("Kernel::System::Log")->Dumper("REITO");
+
+					my $ServiceName = $Self->{ServiceObject}->ServiceLookup(ServiceID=>$ServiceID);
 					@RecoverServices =  grep { $_ ne $ServiceID } @RecoverServices;
+					@servicesName = grep { $_ ne $ServiceName } @servicesName;
 				}
-				
-				delete $QueueServicesID{$QID};
-				delete $QueueServicesName{$QID};
-				my %ServiceQueuesIDHashOfArray;
+
 				$QueueServicesID{$QID}=join(';',@RecoverServices) if scalar @RecoverServices;
-				$QueueServicesName{$QID}=join(';',@servicesName) if scalar @RecoverServices;
-			
+				my @ArrayNamesServices;
+				for my $Ids (@RecoverServices) {
+					
+					my $ServiceName = $Self->{ServiceObject}->ServiceLookup(ServiceID=>$Ids);
+					push @ArrayNamesServices, $ServiceName;
+				}
+				$QueueServicesName{$QID}=join(';',@ArrayNamesServices) if scalar @servicesName;
+						
 				my %ServiceQueuesIDHashOfArray;
 				for my $QueueID (keys %QueueServicesID){
 
 					my $Queue = $Self->{QueueObject}->QueueLookup(QueueID=>$QueueID);
 					my @Services = split /;/,$QueueServicesID{$QueueID};
-					SERVICE:
-					for my $ServiceID (@Services){
 
-						next SERVICE if !$ServiceID;
-						if(defined $ServiceQueuesIDHashOfArray{$ServiceID}){
-							if (!( grep $_ eq $Queue, @{$ServiceQueuesIDHashOfArray{$ServiceID}} )){
-								push @{$ServiceQueuesIDHashOfArray{$ServiceID}},$Queue;
+					SERVICE:
+					for my $ID (@Services){
+
+						next SERVICE if !$ID;
+						if(defined $ServiceQueuesIDHashOfArray{$ID}){
+							if (!( grep $_ eq $Queue, @{$ServiceQueuesIDHashOfArray{$ID}} )){
+								push @{$ServiceQueuesIDHashOfArray{$ID}},$Queue;
 							}
 						} else {
-							$ServiceQueuesIDHashOfArray{$ServiceID}=["$Queue"];
+							$ServiceQueuesIDHashOfArray{$ID}=["$Queue"];
 						}
 					}
 				}
@@ -273,80 +281,80 @@ sub Run {
 				return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
 		} else {
  
-        my @IDs = $Self->{ParamObject}->GetArray( Param => 'Queue' );
-	#Delete Example data @todo	
-		delete $QueueServicesID{9999999999999};
-		delete $QueueServicesName{9999999999999};
-		#Delete the actual Queue Data
-		delete $QueueServicesID{$ID};
-		delete $QueueServicesName{$ID};
-		
-		my @servicesName;
+    	    my @IDs = $Self->{ParamObject}->GetArray( Param => 'Queue' );
+		#Delete Example data @todo	
+			delete $QueueServicesID{9999999999999};
+			delete $QueueServicesName{9999999999999};
+			#Delete the actual Queue Data
+			delete $QueueServicesID{$ID};
+			delete $QueueServicesName{$ID};
+			
+			my @servicesName;
 
-		for my $service (@IDs){
-			push(@servicesName,$Self->{ServiceObject}->ServiceLookup(ServiceID=>$service)) if scalar @IDs;
-		}
-		$QueueServicesID{$ID}=join(';',@IDs) if scalar @IDs;
-		$QueueServicesName{$ID}=join(';',@servicesName) if scalar @IDs;
-		
-		my %ServiceQueuesIDHashOfArray;
-		for my $QueueID (keys %QueueServicesID){
-			my $Queue = $Self->{QueueObject}->QueueLookup(QueueID=>$QueueID);
-			my @Services = split /;/,$QueueServicesID{$QueueID};
-			SERVICE:
-			for my $ServiceID (@Services){
-				next SERVICE if !$ServiceID;
-				if(defined $ServiceQueuesIDHashOfArray{$ServiceID}){
-					if (!( grep $_ eq $Queue, @{$ServiceQueuesIDHashOfArray{$ServiceID}} )){
-						push @{$ServiceQueuesIDHashOfArray{$ServiceID}},$Queue;
+			for my $service (@IDs){
+				push(@servicesName,$Self->{ServiceObject}->ServiceLookup(ServiceID=>$service)) if scalar @IDs;
+			}
+			$QueueServicesID{$ID}=join(';',@IDs) if scalar @IDs;
+			$QueueServicesName{$ID}=join(';',@servicesName) if scalar @IDs;
+			
+			my %ServiceQueuesIDHashOfArray;
+			for my $QueueID (keys %QueueServicesID){
+				my $Queue = $Self->{QueueObject}->QueueLookup(QueueID=>$QueueID);
+				my @Services = split /;/,$QueueServicesID{$QueueID};
+				SERVICE:
+				for my $ServiceID (@Services){
+					next SERVICE if !$ServiceID;
+					if(defined $ServiceQueuesIDHashOfArray{$ServiceID}){
+						if (!( grep $_ eq $Queue, @{$ServiceQueuesIDHashOfArray{$ServiceID}} )){
+							push @{$ServiceQueuesIDHashOfArray{$ServiceID}},$Queue;
+						}
+					} else {
+						$ServiceQueuesIDHashOfArray{$ServiceID}=["$Queue"];
 					}
-				} else {
-					$ServiceQueuesIDHashOfArray{$ServiceID}=["$Queue"];
 				}
 			}
-		}
-		
-		my %ServiceQueuesIDs;
-		
-		for my $Service (keys %ServiceQueuesIDHashOfArray){
-			$ServiceQueuesIDs{$Service} = join(';',@{$ServiceQueuesIDHashOfArray{$Service}});
-		}
-		
-		$Self->{SysConfig}->SettingsSet(
-			Settings => [                                       # (required) List of settings to update.
-				{
-					Name => 'QueueService::QueueServicesID',
-					EffectiveValue => \%QueueServicesID,
-					IsValid                => 1,                # (optional)
-				},
-			],
-			UserID => 1
-		 );
+			
+			my %ServiceQueuesIDs;
+			
+			for my $Service (keys %ServiceQueuesIDHashOfArray){
+				$ServiceQueuesIDs{$Service} = join(';',@{$ServiceQueuesIDHashOfArray{$Service}});
+			}
+			
+			$Self->{SysConfig}->SettingsSet(
+				Settings => [                                       # (required) List of settings to update.
+					{
+						Name => 'QueueService::QueueServicesID',
+						EffectiveValue => \%QueueServicesID,
+						IsValid                => 1,                # (optional)
+					},
+				],
+				UserID => 1
+			 );
 
-		$Self->{SysConfig}->SettingsSet(
-			Settings =>[
-				{
-					Name => 'QueueService::ServiceQueuesID',
-					EffectiveValue => \%ServiceQueuesIDs,					
-					IsValid                => 1,                # (optional)
-				}
-			],
-			UserID => 1
-		 );
-			 
-		$Self->{SysConfig}->SettingsSet(
-			Settings => [
-				{
-					Name => 'QueueService::QueueServicesName',
-					EffectiveValue => \%QueueServicesName,
-					IsValid                => 1,                # (optional)
-				}
-			],
-			UserID => 1
-		 );
-		
-		return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
-    }
+			$Self->{SysConfig}->SettingsSet(
+				Settings =>[
+					{
+						Name => 'QueueService::ServiceQueuesID',
+						EffectiveValue => \%ServiceQueuesIDs,					
+						IsValid                => 1,                # (optional)
+					}
+				],
+				UserID => 1
+			 );
+				 
+			$Self->{SysConfig}->SettingsSet(
+				Settings => [
+					{
+						Name => 'QueueService::QueueServicesName',
+						EffectiveValue => \%QueueServicesName,
+						IsValid                => 1,                # (optional)
+					}
+				],
+				UserID => 1
+			 );
+			
+			return $Self->{LayoutObject}->Redirect( OP => "Action=$Self->{Action}" );
+    	}
 	}
     # ------------------------------------------------------------ #
     # overview
