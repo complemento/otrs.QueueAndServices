@@ -401,9 +401,12 @@ sub _Change {
     );
 
     $Self->{LayoutObject}->Block( Name => "ChangeHeader$VisibleType{$NeType}" );
+    my $Object = ($Self->{Subaction} eq 'Queue')?'Services':'Queues';
+
     $Self->{LayoutObject}->Block(
         Name => 'ChangeHeader',
         Data => {
+            Object => $Object,
             %Param,
             Type          => $Type,
             NeType        => $NeType,

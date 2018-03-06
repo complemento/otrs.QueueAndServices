@@ -88,7 +88,7 @@
                 </div>
                 <div class="Size1of2">
                     <ul class="Tablelike" id="Services">
-                        <li class="Header">[% Translate("Services") | html %] (1:N Not Implemented yet)</li>
+                        <li class="Header">[% Translate("Services") | html %]</li>
                         <li class="FilterMessage Hidden">[% Translate("No matches found.") | html %]</li>
 [% RenderBlockStart("NoResponsesFoundMsg") %]
                         <li>[% Translate("No data found.") | html %]</li>
@@ -130,8 +130,8 @@
                     <table class="DataTable VariableWidth" id="UserRoles">
                         <thead>
                             <tr>
-                                <th>[% Translate("Services") | html %]</th>
 [% RenderBlockStart("ChangeHeader") %]
+                                <th>[% Translate(Data.Object) | html %]</th>
                                 <th class="[% Data.Mark | html %]">
                                     <input type="checkbox" id="SelectAll[% Data.Type | html %]" name="[% Data.Type | html %]" title="[% Translate("Toggle active state for all") | html %]" value="" />
                                     [% Translate("Active") | html %]
