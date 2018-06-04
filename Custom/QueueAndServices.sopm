@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <otrs_package version="1.1">
     <Name>QueueAndServices</Name>
-    <Version>6.0.1</Version>
-    <Vendor>Complemento [Free]</Vendor>
+    <Version>6.0.2</Version>
+    <Vendor>Ligero [Community]</Vendor>
     <URL>http://www.complemento.net.br</URL>
     <License>GNU GENERAL PUBLIC LICENSE Version 2, June 1991</License>
     <ChangeLog Date="2011-10-18 18:45:21" Version="0.0.1">Initial version. Very unstable.</ChangeLog>
@@ -19,6 +19,5 @@
         <File Location="Kernel/Modules/AdminQueueServices.pm" Permission="644" Encode="Base64"></File>
         <File Location="Custom/QueueAndServices.sopm" Permission="644" Encode="Base64"></File>
         <File Location="Kernel/Output/HTML/Templates/Standard/AdminQueueServices.tt" Permission="644" Encode="Base64"></File>
-        <File GoogleDrive="1m_7PL5NPd26wlURiuPFaCzePX-8CNrQ__d-EI-oo_04" Location="doc/pt_BR/QueueAndServices.pdf" Permission="644" Encode="Base64"></File>
     </Filelist>
 </otrs_package>
