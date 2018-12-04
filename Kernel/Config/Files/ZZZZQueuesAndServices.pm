@@ -1,26 +1,29 @@
 # --
 # VERSION:1.1
 package Kernel::Config::Files::ZZZZQueuesAndServices;
+use strict;
+use warnings;
+no warnings 'redefine';
 use utf8;
 sub Load {
     my ($File, $Self) = @_;
 
 	# check if QueueServices is enabled
-
-	if ( !$Self->Get('QueueService::QSActive') ) {
+	if ( !$Self->{'QueueService::QSActive'} ) {
+		my $aa = $Self->Getss('QueueService::QSActive');
 		return;
 	} 
 
-	if ( $Self->Get('QueueService::QSActive') eq "1" ) {
+	if ( $Self->{'QueueService::QSActive'} eq "1" ) {
 		# check if we will block all services for all queues standard
-		if ( $Self->Get('QueueService::BlockAll') ) {
+		if ( $Self->{'QueueService::BlockAll'} ) {
 			$Self->{TicketAcl}->{'ACL-QS_000-All'} = {
 				Properties => {},
 				PossibleNot => {Ticket => {Service  => ['[RegExp]^']}}
 			};
 		}
 
-		my $qs_hash=$Self->Get('QueueService::QueueServicesName') or return;
+		my $qs_hash=$Self->{'QueueService::QueueServicesName'} or return;
 		my %QueueServices = %{$qs_hash};
 		my @Items;
 		for my $Queue ( keys %QueueServices ) {
@@ -32,14 +35,14 @@ sub Load {
 		}
 	} else {
 		# check if we will block all Queues for all Services standard
-		if ( $Self->Get('QueueService::BlockAll') ) {
+		if ( $Self->{'QueueService::BlockAll'} ) {
 			$Self->{TicketAcl}->{'ACL-SQ_000-All'} = {
 				Properties => {},
 				PossibleNot => {Ticket => {Queue  => ['[RegExp]^']}}
 			};
 		}
 
-		my $sq_hash=$Self->Get('QueueService::ServiceQueuesID') or return;
+		my $sq_hash=$Self->{'QueueService::ServiceQueuesID'} or return;
 		my %ServiceQueues = %{$sq_hash};
 		my @Items;
 		for my $Service ( keys %ServiceQueues ) {
