@@ -10,7 +10,6 @@ sub Load {
 
 	# check if QueueServices is enabled
 	if ( !$Self->{'QueueService::QSActive'} ) {
-		my $aa = $Self->Getss('QueueService::QSActive');
 		return;
 	} 
 
